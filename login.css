@@ -1,0 +1,66 @@
+* { margin: 0; padding: 0; }
+
+html {
+  background: url(images/background.png) no-repeat top center;
+  background-color: #F8F8F8 !important;
+}
+
+body{
+	padding-top: 0px;
+	font: 13px 'Open Sans', sans-serif;
+}
+body.login{
+	background-color: transparent;
+}
+
+div.updated, .login .message {
+    background-color: #017CB4;
+	color: white;
+	border: 1px solid black;
+	-moz-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	-webkit-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	-khtml-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+}
+
+
+.login #nav a, .login #backtoblog a {
+    color: gray !important;
+	font-weight: 700;
+}
+
+.login #nav a:hover, .login #backtoblog a:hover {
+    color: black !important;
+	font-weight: 700;
+}
+
+
+form {
+	margin-left: 8px;
+	padding: 26px 24px 46px;
+	font-weight: 400;
+	-moz-border-radius: 3px;
+	-khtml-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	background: #fff;
+	border: 1px solid #e5e5e5;
+	-moz-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	-webkit-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	-khtml-box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+	box-shadow: rgba(200, 200, 200, 0.7) 0px 4px 10px -1px;
+}
+
+h1 a {
+	width: 160px !important;
+	height: 89px !important;
+	background-size: 160px 89px !important;
+	border: none;
+	outline: 0 !important;
+	background-image: url(images/msstavby.gif) !important;
+}
+
+#login {
+	width: 1022px;
+	margin-top: 0px;
+}
