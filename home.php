@@ -215,22 +215,7 @@ get_header();
 						</div>
 					</div>
 				</div>
-			</section>
-			
-			<!-- Partners Section -->
-			<section class="py-5">
-				<div class="container">
-					<h2 class="mb-4">Naši partneři</h2>
-					<p class="mb-4">Máte co nabídnout? Rádi vás zařadíme mezi partnery webu!</p>
-					<div class="d-flex flex-wrap gap-5 text-center">
-						<div><strong>Ostravské sochy</strong></div>
-						<div><strong>Kabinet architektury</strong></div>
-						<div><strong>Infocity</strong></div>
-						<div><strong>Petr Adamec</strong></div>
-						<div><strong>Olstavby</strong></div>
-					</div>
-				</div>
-			</section>
+		</section>
 		</div><!-- .container -->
 	</main><!-- #primary -->
 <?php
