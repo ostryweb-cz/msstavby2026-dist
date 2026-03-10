@@ -39,15 +39,3 @@
 		<p class="mt-3">Mapa se načítá...</p>
 	</div>
 </div><?php admin_comment('#geo-map-container'); ?>
-
-<?php admin_comment('Map Instructions'); ?>
-<?php if (current_user_can('administrator')): ?>
-<div class="alert alert-info mt-3">
-	<strong>Admin poznámka:</strong> Tato mapa vyžaduje aktivní plugin Geo Mashup. Pokud mapa nefunguje, zkontrolujte:
-	<ul>
-		<li>Je plugin Geo Mashup aktivován?</li>
-		<li>Jsou příspěvky geograficky označeny (souřadnice)?</li>
-		<li>Je tento šablony přiřazena k stránce Mapa (ID 1289) v adminu?</li>
-	</ul>
-</div>
-<?php endif; ?>
