@@ -4,6 +4,17 @@
 
 Standard WordPress theme following WordPress template hierarchy with semantic CSS naming, dynamic post loops, and proper menu management.
 
+## Coding Standards
+
+**Styling Guidelines:**
+- All styles must be in CSS files (style.css, style-semantic.css)
+- Exception: special elements controlled by JavaScript may use inline styles
+- Avoid inline styles in HTML templates whenever possible
+
+## Legacy/old Version Reference
+
+When referring to the legacy version or old version, the codebase is in `../msstavby-old/`. This previous generation has different structure and scipt names, but hase some features that are modernized, but have the same purpose.
+
 ## Theme Files
 
 ### Core Templates
@@ -17,14 +28,21 @@ Standard WordPress theme following WordPress template hierarchy with semantic CS
 ### Styles & Scripts
 - `style.css` - Design-specific styles
 - `style-semantic.css` - Semantic CSS classes
-- `script.js` - Frontend JavaScript
+- `script.js` - Frontend JavaScript (source)
+- `script.min.js` - Minified JavaScript (generated in dist/ only)
 
 ## Menu Locations
 
-Two menu locations registered in functions.php:
+Four menu locations registered in functions.php:
 
 1. **Primary Menu** (primary) - Top navigation in header
-2. **Footer Menu** (footer) - Footer navigation
+2. **Footer Menu** (footer) - Footer navigation (column 3)
+3. **Social Networks** (social) - Social media links (column 1)
+4. **Learn More** (learn-more) - Additional links (column 2)
+
+## Categories Filter
+
+A categories filter (Lokality) should be displayed at the top of the page, functioning similarly to the legacy version's Lokality menu in the right sidebar. This filter uses WordPress categories (`wp_list_categories`) to allow filtering posts by locality/category.
 
 To assign menus:
 - WordPress Admin → Appearance → Menus
@@ -46,8 +64,22 @@ Semantic naming convention:
 - Custom logo, post thumbnails, post formats
 - Primary & Footer menu locations
 - Custom editor styles, HTML5 markup
+- Search and login buttons using WordPress jQuery with fadeToggle animation
+- Backward compatibility with legacy msstavby theme
 
 ## Development Workflow
+
+### Testing
+```bash
+npm test
+```
+
+The test suite validates syntax for:
+- JavaScript files (via Node.js)
+- PHP files (via PHP lint)
+- Shell scripts (via ShellCheck or bash -n)
+
+Tests must pass before releasing.
 
 ### Build Distribution
 ```bash
@@ -55,8 +87,18 @@ npm run build
 ```
 
 This command:
-1. Minifies JavaScript
+1. Minifies JavaScript using webpack to `dist/msstavby2026/script.min.js`
 2. Copies production files to `dist/msstavby2026/`
+
+### Release
+```bash
+npm run release
+```
+
+This command:
+1. Runs tests
+2. Builds distribution
+3. Creates GitHub release with version tag
 
 ### Deploy to Public Repository
 ```bash
@@ -66,13 +108,16 @@ This command:
 ### Daily Development
 ```bash
 # 1. Edit source files
-# 2. Build
+# 2. Test
+npm test
+
+# 3. Build
 npm run build
 
-# 3. Deploy (optional - for WordPress updates)
+# 4. Deploy (optional - for WordPress updates)
 ./deploy-public.sh
 
-# 4. Commit
+# 5. Commit
 git add dist/
 git commit -m "Theme update"
 git push origin main

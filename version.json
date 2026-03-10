@@ -1,0 +1,10 @@
+{
+  "theme": {
+    "version": "2.0.146"
+  },
+  "assets": {
+    "script.min.js": "1.0.107",
+    "style.css": "1.0.109",
+    "style-semantic.css": "1.0.109"
+  }
+}

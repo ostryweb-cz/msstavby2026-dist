@@ -19,20 +19,24 @@
 	<div id="page" class="site">
 		<a class="skip-link screen-reader-text" href="#main-content"><?php esc_html_e( 'Skip to content', 'msstavby' ); ?></a>
 
-		<header id="masthead" class="site-header bg-white shadow-sm py-3 fixed-top" style="min-height: 72px;">
-			<div class="container">
-				<div class="d-flex justify-content-between align-items-center">
-					<div class="site-branding">
-						<?php
+		<header id="masthead" class="site-header bg-white fixed-top">
+			<div class="container h-100">
+				<div class="d-flex justify-content-between align-items-center h-100">
+					<div class="site-branding my-1">
+					<?php
 					if ( function_exists( 'the_custom_logo' ) && has_custom_logo() ) {
 						the_custom_logo();
+					} elseif ( file_exists( get_template_directory() . '/images/msstavby.gif' ) ) {
+						echo '<a href="' . esc_url( home_url( '/' ) ) . '" class="text-decoration-none">';
+						echo '<img src="' . esc_url( get_template_directory_uri() . '/images/msstavby.gif' ) . '" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '" title="' . esc_attr( get_bloginfo( 'name' ) ) . '" width="160" height="89" />';
+						echo '</a>';
 					} else {
 						echo '<a href="' . esc_url( home_url( '/' ) ) . '" class="text-decoration-none text-dark text-decoration-none">';
 						echo '<h1 class="site-title h5 m-0">' . esc_html( bloginfo( 'name' ) ) . '</h1>';
 						echo '</a>';
 					}
 					?>
-					</div><!-- .site-branding -->
+						<?php admin_comment('.site-branding'); ?>
 
 					<div class="d-flex align-items-center gap-3">
 						<nav class="navbar navbar-expand-md">
@@ -52,33 +56,32 @@
 							</div>
 						</nav>
 						
-						<div class="d-flex align-items-center gap-2">
-							<!-- Search Toggle (always visible) -->
-							<button class="btn btn-link p-2" id="search-toggle" aria-label="Search">
-								<i class="bi bi-search"></i>
-							</button>
+						<div class="header-actions d-flex align-items-center gap-2">
+						<?php admin_comment('Search Toggle (always visible)'); ?>
+						<a href="#" id="searchbutt" title="vyhledávání" class="p-2 header-icon" aria-label="Search">
+							<i class="bi bi-search"></i>
+						</a>
 							
-						<!-- Login/Logout Link -->
+						<?php admin_comment('Login/Logout Link'); ?>
 						<?php
-						if ( is_user_logged_in() ) {
-							$logout_url = wp_logout_url( home_url() );
+						$is_logged_in = current_user_can( 'level_0' );
+						$account_url = $is_logged_in ? wp_logout_url( $_SERVER['REQUEST_URI'] ) : 'https://www.msstavby.cz/prihlaseni/';
+						$account_title = $is_logged_in ? 'odhlásit' : 'přihlásit';
+						$account_aria = $is_logged_in ? 'Logout' : 'Login';
+						$account_icon = $is_logged_in ? 'person-fill' : 'person';
 						?>
-						<a href="<?php echo esc_url( $logout_url ); ?>" class="btn btn-link p-2" aria-label="Logout">
-							<i class="bi bi-person-fill"></i>
+						<a href="<?php echo esc_url( $account_url ); ?>" class="p-2 header-icon" aria-label="<?php echo esc_attr( $account_aria ); ?>" title="<?php echo esc_attr( $account_title ); ?>">
+							<i class="bi bi-<?php echo esc_attr( $account_icon ); ?>"></i>
 						</a>
-						<?php } else { ?>
-						<a href="<?php echo esc_url( wp_login_url( home_url() ) ); ?>" class="btn btn-link p-2" aria-label="Login">
-							<i class="bi bi-person"></i>
-						</a>
-						<?php } ?>
 						</div>
 				</div>
 			</div>
 			
-			<!-- Search Form (hidden by default) -->
-			<div class="collapse" id="search-form">
+		<?php admin_comment('Search Form (hidden by default)'); ?>
+		<div id="searchWrap">
 				<div class="container py-3">
 					<?php get_search_form(); ?>
 				</div>
 			</div>
-		</header><!-- #masthead -->
+		<?php admin_comment('#masthead'); ?>
+		</header>

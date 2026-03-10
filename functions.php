@@ -5,7 +5,6 @@ require_once(ABSPATH . 'wp-admin/includes/image.php');
 require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 ini_set('display_errors','Off');
 ini_set('error_reporting', E_ALL );
-$generation_serial = '63.14296990208514';
 
 // ============================================================
 // THEME SETUP
@@ -19,25 +18,56 @@ if ( !function_exists( 'msstavby_setup' ) ) {
 }
 
 // ============================================================
+// ASSET VERSION MANAGEMENT
+// ============================================================
+
+function msstavby_get_asset_version($asset_filename) {
+	// For theme version, use WordPress standard: style.css Version header
+	if ($asset_filename === 'style.css') {
+		return wp_get_theme()->get('Version');
+	}
+	
+	// For individual assets, use version.json
+	$versions_file = get_template_directory() . '/version.json';
+	if (!file_exists($versions_file)) {
+		return '1.0.0'; // fallback version
+	}
+	
+	$versions_data = json_decode(file_get_contents($versions_file), true);
+	if (!$versions_data || !isset($versions_data['assets'][$asset_filename])) {
+		return '1.0.0'; // fallback version
+	}
+	
+	return $versions_data['assets'][$asset_filename];
+}
+
+// ============================================================
 // ENQUEUE STYLES AND SCRIPTS
 // ============================================================
 
 add_action( 'wp_enqueue_scripts', function() {
+// Google Fonts: Plus Jakarta Sans
+	wp_enqueue_style( 'google-fonts-plus-jakarta-sans', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap', array(), null );
+	
 	// Bootstrap 5 CSS
 	wp_enqueue_style( 'bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css', array(), '5.3.2' );
-		
+	
 	// Bootstrap Icons
 	wp_enqueue_style( 'bootstrap-icons', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css', array('bootstrap-css'), '1.11.1' );
 	
-	// Theme styles
-	wp_enqueue_style( 'style', get_theme_file_uri( 'style.css' ), array( 'bootstrap-css' ), wp_get_theme( 'msstavby' )->get( 'Version' ) );
-	wp_enqueue_style( 'style-semantic', get_theme_file_uri( 'style-semantic.css' ), array( 'style' ), wp_get_theme( 'msstavby' )->get( 'Version' ) );
+// Theme styles
+	$style_version = msstavby_get_asset_version('style.css');
+	$style_semantic_version = msstavby_get_asset_version('style-semantic.css');
+	$script_version = msstavby_get_asset_version('script.min.js');
+	
+	wp_enqueue_style( 'style', get_theme_file_uri( 'style.css' ), array( 'bootstrap-css', 'google-fonts-plus-jakarta-sans' ), $style_version );
+wp_enqueue_style( 'style-semantic', get_theme_file_uri( 'style-semantic.css' ), array( 'style', 'google-fonts-plus-jakarta-sans' ), $style_semantic_version );
 	
 	// Bootstrap 5 JS (depends on jQuery)
 	wp_enqueue_script( 'bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), '5.3.2', true );
 	
 	// Custom scripts
-	wp_enqueue_script( 'custom-script', get_theme_file_uri() . '/script.js', array( 'jquery' ), wp_get_theme( 'msstavby' )->get( 'Version' ), true );
+	wp_enqueue_script( 'custom-script', get_theme_file_uri() . '/script.min.js', array( 'jquery' ), $script_version, true );
 	
 	// JS Alert
 	wp_enqueue_script( 'js-alert', 'https://unpkg.com/js-alert/dist/jsalert.min.js', array(), null, true );
@@ -90,25 +120,11 @@ function reset_permalinks() {
 // ============================================================
 
 function add_pages(){
-	global $generation_serial;
-	$pages = array(
-		// Templates removed - use standard WordPress page templates instead
-	);
-	// Template page generation disabled - creates pages from standard PHP templates
-	// Pages should be created manually in WordPress admin
+	// Page creation disabled - pages should be created manually in WordPress admin
 }
 
 function add_menus(){
-	function add_links_to_menu($menu_id, $links) {
-		foreach ($links as $link) {
-			wp_update_nav_menu_item($menu_id, 0, array(
-				'menu-item-title' => $link['title'],
-				'menu-item-url' => $link['url'],
-				'menu-item-status' => 'publish',
-				'menu-item-type' => 'custom'
-			));
-		}
-	}
+	// Menu creation disabled - menus should be created manually in WordPress admin
 }
 
 // ============================================================
@@ -122,7 +138,9 @@ if ( !function_exists( 'msstavby_theme_support' ) ) {
 		add_theme_support( 'post-formats', array( 'image', 'gallery', 'video', 'audio' ) );
 		register_nav_menus( array(
 			'primary' => esc_html__( 'Primary Menu', 'msstavby' ),
-			'footer' => esc_html__( 'Footer Menu', 'msstavby' )
+			'footer' => esc_html__( 'Footer Menu', 'msstavby' ),
+			'social' => esc_html__( 'Social Networks', 'msstavby' ),
+			'learn-more' => esc_html__( 'Learn More', 'msstavby' )
 		) );
 		set_post_thumbnail_size( 235, 150, true );
 	}
@@ -134,15 +152,6 @@ if ( !function_exists( 'msstavby_theme_support' ) ) {
 
 function plugin_installation(){
 	// Plugin installation disabled - plugins must be installed manually
-}
-
-function activate_msstavby_plugins($plugins){
-	foreach ( $plugins as $plugin ) {
-		$result = activate_plugin(WP_CONTENT_DIR."/plugins/".$plugin."/".$plugin.".php" );
-		if ( is_wp_error( $result ) ) {
-			$errors[ $plugin ] = $result;
-		}
-	}
 }
 
 // ============================================================
@@ -286,7 +295,7 @@ function get_social_img() {
 		if ($getlength > 160) $excerpt .= "...";
 		$ogdescription = 'content="'. ( (strpos ( $excerpt , '//')===FALSE)?$excerpt:'Blog monitorující dění na poli výstavby a rekonstrukcí staveb v Moravskoslezském regionu.') .'"/>'; 	
 	}
-	$ogdescription = '<meta property="og:description" '.$ogdescription."\n".'\t<meta name="description" '.$ogdescription;
+	$ogdescription = '<meta property="og:description" '.$ogdescription."\n\t".'<meta name="description" '.$ogdescription;
 	$lati = get_post_custom_values('geo_latitude', $post->ID);
 	$longi = get_post_custom_values('geo_longitude', $post->ID);
 	?>
@@ -356,6 +365,169 @@ function reserve_space_for_embeds($content) {
 	return $content;
 }
 add_filter('the_content', 'reserve_space_for_embeds');
+
+// ============================================================
+// GEO MASHUP MAP AJAX LOADER
+// ============================================================
+
+// Register REST API endpoint for lazy-loading the map
+function register_geo_map_endpoint() {
+	register_rest_route('msstavby/v1', '/geo-map', array(
+		'methods' => 'GET',
+		'callback' => 'get_geo_map_shortcode',
+		'permission_callback' => '__return_true',
+	));
+}
+add_action('rest_api_init', 'register_geo_map_endpoint');
+
+// Register REST API endpoint for filtering posts by category
+function register_filter_posts_endpoint() {
+	register_rest_route('msstavby/v1', '/filter-posts', array(
+		'methods' => 'POST',
+		'callback' => 'filter_posts_by_category',
+		'permission_callback' => '__return_true',
+	));
+}
+add_action('rest_api_init', 'register_filter_posts_endpoint');
+
+// Callback to filter posts
+function filter_posts_by_category($request) {
+	$params = $request->get_json_params();
+	$categories = isset($params['categories']) ? $params['categories'] : array();
+	$posts_per_page = isset($params['posts_per_page']) ?intval($params['posts_per_page']) : 6;
+	$paged = isset($params['paged']) ? intval($params['paged']) : 1;
+
+	$args = array(
+		'post_type' => 'post',
+		'orderby' => 'date',
+		'order' => 'DESC',
+		'paged' => $paged,
+		'posts_per_page' => $posts_per_page,
+	);
+
+	// Filter by category if specified
+	if (!empty($categories) && !in_array(0, $categories)) {
+		$args['category__in'] = $categories;
+	}
+
+	$query = new WP_Query($args);
+	
+	$html = '';
+	if ($query->have_posts()) {
+		$html = '<div class="row">';
+		while ($query->have_posts()) {
+			$query->the_post();
+			$html .= '<div class="col-12 col-md-4 mb-4">';
+			$html .= '<div class="card h-100">';
+			if (has_post_thumbnail()) {
+				$html .= '<div class="card-img-top position-relative">';
+				$html .= '<a href="' . esc_url(get_the_permalink()) . '">';
+				$html .= get_the_post_thumbnail(get_the_ID(), 'medium', array('class' => 'w-100 h-100 object-fit-cover'));
+				$html .= '</a>';
+				$html .= '</div>';
+			}
+			$html .= '<div class="card-body d-flex flex-column">';
+			$html .= '<small class="text-muted mb-2">';
+			$html .= '<time datetime="' . esc_attr(get_the_date('c')) . '">';
+			$html .= esc_html(get_the_date('d.m.Y'));
+			$html .= '</time></small>';
+			$html .= '<h5 class="card-title">';
+			$html .= '<a href="' . esc_url(get_the_permalink()) . '" class="text-decoration-none">';
+			$html .= get_the_title();
+			$html .= '</a></h5>';
+			$html .= '<p class="card-text flex-grow-1">' . get_the_excerpt() . '</p>';
+			$html .= '<div class="d-flex justify-content-between align-items-center mt-auto">';
+			$html .= '<a href="' . esc_url(get_the_permalink()) . '" class="fw-bold text-decoration-none">&rarr; Číst dále</a>';
+			if (comments_open()) {
+				$html .= '<span class="badge bg-secondary"><i class="bi bi-chat-dots"></i> ' . get_comments_number() . '</span>';
+			}
+			$html .= '</div>';
+			$html .= '</div>';
+			$html .= '</div>';
+			$html .= '</div>';
+		}
+		$html .= '</div>';
+		wp_reset_postdata();
+	}
+
+	// Generate AJAX-friendly pagination (avoid REST-context links like /wp-json/...)
+	$pagination = '';
+	if ($query->max_num_pages > 1) {
+		// Use paginate_links for proper pagination (similar to home.php)
+		$big = 999999999;
+		$wp_pagination = paginate_links(
+			array(
+				'prev_text' => '&lsaquo;', // Remove href to make it clickable via JS
+				'next_text' => '&rsaquo;', // Remove href to make it clickable via JS
+				'current' => $paged,
+				'total' => $query->max_num_pages,
+				'type' => 'array',
+			)
+		);
+
+		$prev = '<li class="page-item">';
+		$prev .= '<a class="page-link filter-page-link" data-page="' . max(1, $paged - 1) . '" href="javascript:void(0)">&lsaquo;</a>';
+		$prev .= '</li>';
+
+		$next = '<li class="page-item">';
+		$next .= '<a class="page-link filter-page-link" data-page="' . min($query->max_num_pages, $paged + 1) . '" href="javascript:void(0)">&rsaquo;</a>';
+		$next .= '</li>';
+
+		$pages = '';
+		if (!empty($wp_pagination)) {
+			foreach ($wp_pagination as $page_link) {
+				// Check if this is the current page
+				if (strpos($page_link, 'current') !== false) {
+					$pages .= '<li class="page-item active"><span class="page-link">' . strip_tags($page_link) . '</span></li>';
+				} elseif (strpos($page_link, 'dots') !== false) {
+					$pages .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+				} else {
+					// Extract page number from the link
+					preg_match('/>([0-9]+)</', $page_link, $matches);
+					$page_num = isset($matches[1]) ? $matches[1] : '';
+					if ($page_num) {
+						$pages .= '<li class="page-item"><a class="page-link filter-page-link" data-page="' . $page_num . '" href="javascript:void(0)">' . $page_num . '</a></li>';
+					}
+				}
+			}
+		}
+
+		$pagination = '<nav aria-label="Page navigation"><ul class="pagination">' . $prev . $pages . $next . '</ul></nav>';
+	}
+
+	return array(
+		'success' => true,
+		'html' => $html,
+		'pagination' => $pagination,
+	);
+}
+
+// Callback to render the map shortcode
+function get_geo_map_shortcode($request) {
+	// Check if Geo Mashup plugin is active
+	if (!shortcode_exists('geo_mashup_map')) {
+		return new WP_Error('plugin_missing', 'Geo Mashup plugin is not installed or active.', array('status' => 500));
+	}
+	
+	// Get category filter from request
+	$category_id = $request->get_param('category');
+	$shortcode_args = '';
+	
+	if ($category_id && $category_id !== '0') {
+		$category = get_category($category_id);
+		if ($category) {
+			$shortcode_args = ' category_name="' . $category->slug . '"';
+		}
+	}
+	
+	// Render Geo Mashup shortcode with category filter
+	$map_html = do_shortcode('[geo_mashup_map' . $shortcode_args . ']');
+	
+	return array(
+		'success' => true,
+		'html' => $map_html
+	);
+}
 
 // Replace uploaded image with large version
 function replace_uploaded_image($image_data) {
@@ -454,32 +626,31 @@ function msstavby_gallery_shortcode($attr) {
 }
 
 // ============================================================
-// COMMENT CUSTOMIZATIONS
+// PLUGIN REMOVAL ON HOMEPAGE
 // ============================================================
 
-function msstavby_comment($comment, $args, $depth) {
-	if (trollcheck($comment->ID)){
-		$GLOBALS['comment'] = $comment;
-		$title = "Komentuje ".strip_tags($comment->comment_author). " u článku '". get_the_title($comment->comment_post_ID)."'";
-		$date = (get_comment_time('d.m')==date('d.m')?get_comment_time('H:i'):get_comment_time('d.m'));
-		date_default_timezone_set('Europe/Prague');
-		$comment_time = strtotime($comment->comment_date);
-		$output .= "\n<li title=\"".$title."\" id=\"".$comment->comment_post_ID."-".$comment_time."\">";
-		$output .= $date . ' ';
-		$output .= " <a href=\"" . preg_replace('%comment-page-(\d+)?/%', '', get_comment_link( $comment->comment_ID ));
-		$output .= "\" title=\"" .$title;
-		$output .= "\">";
-		$commentx = iconv("UTF-8","ISO-8859-2", $comment->comment_content );
-		$snippet = trim( preg_replace('#<a.*?>.*?</a>:#i', '', $commentx) );
-		if (empty($snippet)){
-			$output .= substr(strip_tags($comment->comment_content), 0, 200); 
-		} else {
-			$output .= iconv("ISO-8859-2","UTF-8//IGNORE", substr(strip_tags($snippet), 0, 200) );
-		}
-		$output .= "</a></li>";
+function remove_plugs_onhome() {
+	if (is_home() || is_single(36356)){
+		/* share this */
+		remove_action('wp_head', 'st_widget_head');
+		/* pro player */
+		remove_action('wp_head', array(&$proPlayer, "addHeaderCode"));
+		/* erp show related posts */
+		remove_action('wp_head', 'erp-show-related-posts');
+		/* easy fancy box */
+		remove_action('init', array('easyFancyBox', 'init'), 999);
+		remove_action('wp_print_scripts', array('easyFancyBox','register_scripts'), 999);
+		remove_action('wp_enqueue_scripts', array('easyFancyBox','enqueue_styles'), 999);
+		remove_action('wp_head', array('easyFancyBox','main_script'), 999);
+		remove_action('wp_footer', array('easyFancyBox','enqueue_footer_scripts'), 999);
+		remove_action('wp_footer', array('easyFancyBox', 'on_ready'), 999);
 	}
-	echo $output;
 }
+add_action('wp_head', 'remove_plugs_onhome', 1);
+
+// ============================================================
+// COMMENT CUSTOMIZATIONS
+// ============================================================
 
 function mytheme_comments_form_defaults($default) {
 	unset($default['comment_notes_after']);
@@ -488,10 +659,43 @@ function mytheme_comments_form_defaults($default) {
 }
 add_filter('comment_form_defaults','mytheme_comments_form_defaults');
 
-function trollcheck($comment){
+function msstavby_comment_callback( $comment, $args, $depth ) {
+	$GLOBALS['comment'] = $comment;
+	$comment_link = get_comment_link( $comment->comment_ID );
+	$comment_author_name = get_comment_author();
+?>
+<li <?php comment_class(); ?> id="comment-<?php comment_ID(); ?>">
+	<div class="comment-wrapper">
+		<div class="comment-meta">
+			<cite class="comment-author-reply" data-comment-id="<?php echo esc_attr( $comment->comment_ID ); ?>" data-comment-link="<?php echo esc_attr( $comment_link ); ?>" data-comment-author="<?php echo esc_attr( $comment_author_name ); ?>" title="Reagovat na <?php echo esc_attr( $comment_author_name ); ?>"><?php comment_author(); ?></cite>
+			<span class="comment-time">
+					<?php comment_date( 'd.m.Y' ); ?>
+					<span class="separator">&nbsp;&#9679;&nbsp;</span>
+					<?php echo esc_html( get_comment_time( 'H:i' ) ); ?>
+				</span>
+		</div>
+		<div class="comment-text"><?php comment_text(); ?></div>
+		<div class="comment-actions">
+			<div class="comment-rating">
+				<?php if ( function_exists('ckrating_display_karma') && !is_single(36356) ) { ckrating_display_karma(); } ?>
+			</div>
+			<?php comment_reply_link( array( 'before' => '', 'after' => '', 'depth' => $depth, 'max_depth' => $args['max_depth'] ) ); ?>
+		</div>
+	</div>
+</li>
+<?php
+}
+
+function trollcheck($comment_id){
+	$comment = get_comment($comment_id);
+	if (!$comment) {
+		return false;
+	}
+	
+	$email = $comment->comment_author_email;
+	$author = $comment->comment_author;
 	$istroll = true;
-	$email = get_comment_author_email($comment);
-	$author = get_comment_author($comment);
+	
 	if ( strpos($author, "[msstavby.cz]") !== false){
 		switch($author){
 			case 'acdlcia [msstavby.cz]':
@@ -513,42 +717,40 @@ function trollcheck($comment){
 	return !($istroll);
 }
 
-function remove_plugs_onhome() {
-	if (is_home() || is_single(36356)){
-		remove_action('wp_head', 'st_widget_head');
-		remove_action('wp_head', array(&$proPlayer, "addHeaderCode"));
-		remove_action('wp_head', 'erp-show-related-posts');
-		remove_action('init', array('easyFancyBox', 'init'), 999);
-		remove_action('wp_print_scripts', array('easyFancyBox','register_scripts'), 999);
-		remove_action('wp_enqueue_scripts', array('easyFancyBox','enqueue_styles'), 999);
-		remove_action('wp_head', array('easyFancyBox','main_script'), 999);
-		remove_action('wp_footer', array('easyFancyBox','enqueue_footer_scripts'), 999);
-		remove_action('wp_footer', array('easyFancyBox', 'on_ready'), 999);
+// Filter out troll comments from the comments list
+function filter_troll_comments($comments) {
+	$filtered_comments = array();
+	foreach ($comments as $comment) {
+		if (trollcheck($comment->comment_ID)) {
+			$filtered_comments[] = $comment;
+		}
 	}
+	return $filtered_comments;
 }
-add_action('wp_head', 'remove_plugs_onhome', 1);
+add_filter('comments_array', 'filter_troll_comments');
 
 // ============================================================
-// ADMIN INTERFACE ENHANCEMENTS
+// WORDPRESS CUSTOMIZATIONS
 // ============================================================
 
-// Timestamp column
+// Timestamp column in admin
 function timestamp_column($defaults) {
 	$defaults['timestamp'] = 'Datum+';
 	return $defaults;
 }
 
-function timestamp_custom_column($column_name) {
-	if( $column_name == 'timestamp' ) {
+function timestamp_custom_column($column_name, $post_id) {
+	if ( $column_name == 'timestamp' ) {
+		$post = get_post($post_id);
 		echo get_post_status($post_id).'<br>';
-		echo the_time('d.m.Y H:i');
+		echo get_the_time('d.m.Y H:i', $post_id);
 	}
 }
 add_action('manage_posts_custom_column', 'timestamp_custom_column', 10, 2);
 add_filter('manage_posts_columns', 'timestamp_column', 10, 2);
 
-// Thumbnail column
-if ( !function_exists('fb_AddThumbColumn') && function_exists('add_theme_support') ) { 
+// Thumbnail column in admin
+if ( !function_exists('fb_AddThumbColumn') ) { 
 	function fb_AddThumbColumn($cols) {
 		$cols['thumbnail'] = __('Thumbnail');
 		return $cols;
@@ -556,10 +758,8 @@ if ( !function_exists('fb_AddThumbColumn') && function_exists('add_theme_support
 	
 	function fb_AddThumbValue($column_name, $post_id) {
 		if ( 'thumbnail' == $column_name ) {
-			if ( function_exists('has_post_thumbnail') && has_post_thumbnail($id) ) {
-				$thumb = get_the_post_thumbnail($post->ID);
-			}
-			if ( isset($thumb) && $thumb ) {
+			$thumb = get_the_post_thumbnail($post_id, 'thumbnail');
+			if ( $thumb ) {
 				echo $thumb;
 			}
 		}
@@ -567,10 +767,6 @@ if ( !function_exists('fb_AddThumbColumn') && function_exists('add_theme_support
 	add_filter( 'manage_posts_columns', 'fb_AddThumbColumn' );
 	add_action( 'manage_posts_custom_column', 'fb_AddThumbValue', 10, 2 );
 }
-
-// ============================================================
-// WORDPRESS CUSTOMIZATIONS
-// ============================================================
 
 remove_action('wp_head', 'wp_generator');
 remove_filter( 'pre_term_description', 'wp_filter_kses' );
@@ -643,6 +839,18 @@ function disable_emojis_tinymce( $plugins ) {
 // OFFTOPIC PAGE CUSTOMIZATION
 // ============================================================
 
+// Map page template (page 1289)
+function my_map_page_template($template) {
+    if (is_page('1289')) {
+        $custom_template = locate_template('page-1289.php');
+        if ($custom_template) {
+            return $custom_template;
+        }
+    }
+    return $template;
+}
+add_filter('template_include', 'my_map_page_template');
+
 function my_single_template_by_post_id( $located_template ) {
 	if( is_single(36356) ){
 		return locate_template( array( "single-offtopic.php", $located_template ) );
@@ -685,6 +893,112 @@ if ( !function_exists('wp_new_user_notification') ) {
 }
 
 // ============================================================
+// THEME VERSION UPDATE CHECKER FROM GITHUB
+// ============================================================
+
+function msstavby_theme_update_checker($update_transient) {
+	$theme_data = wp_get_theme();
+	$theme_version = $theme_data->get('Version');
+	$theme_slug = $theme_data->get_stylesheet();
+	
+// Debug: Log that function was called
+	$log_data = array(
+		'timestamp' => current_time('mysql'),
+		'status' => 'checker_called',
+		'theme_version' => $theme_version,
+		'theme_slug' => $theme_slug
+	);
+	update_option('msstavby_update_debug', $log_data);
+	
+	
+	// Check for updates from GitHub
+	$github_api_url = 'https://api.github.com/repos/ostryweb-cz/msstavby2026-dist/releases/latest';
+	$response = wp_remote_get($github_api_url, array('timeout' => 10));
+	
+	if (is_wp_error($response)) {
+		update_option('msstavby_update_debug_error', 'API Error: ' . $response->get_error_message());
+		return $update_transient;
+	}
+	
+	$body = wp_remote_retrieve_body($response);
+	$release = json_decode($body);
+	
+	if (isset($release->tag_name)) {
+		$latest_version = ltrim($release->tag_name, 'v');
+		
+		// Get download URL from release assets
+		$download_url = $release->zipball_url;
+		if (!empty($release->assets) && !empty($release->assets[0]->browser_download_url)) {
+			$download_url = $release->assets[0]->browser_download_url;
+		}
+		
+		if (version_compare($latest_version, $theme_version, '>')) {
+			// Update the existing transient with our update info
+			$update_transient->response[$theme_slug] = array(
+				'slug' => $theme_slug,
+				'new_version' => $latest_version,
+				'url' => 'https://github.com/ostryweb-cz/msstavby2026-dist',
+				'package' => $download_url,
+				'tested' => '6.5',
+				'requires_php' => '7.4'
+			);
+			
+			// Debug: Update found
+			update_option('msstavby_update_debug', array(
+				'theme_version' => $theme_version,
+				'latest_version' => $latest_version,
+				'update_needed' => 'YES',
+				'download_url' => $download_url,
+				'timestamp' => current_time('mysql')
+			));
+		} else {
+			// No update needed
+			update_option('msstavby_update_debug', array(
+				'theme_version' => $theme_version,
+				'latest_version' => $latest_version,
+				'update_needed' => 'NO - Current version',
+				'timestamp' => current_time('mysql')
+			));
+		}
+	}
+	
+	return $update_transient;
+}
+add_filter('pre_set_site_transient_update_themes', 'msstavby_theme_update_checker', 10, 1);
+
+function msstavby_delete_theme_cache() {
+	$theme_data = wp_get_theme();
+	$theme_slug = $theme_data->get_stylesheet();
+	$update_transient = 'update_themes_' . $theme_slug;
+	delete_site_transient($update_transient);
+}
+add_action('after_switch_theme', 'msstavby_delete_theme_cache');
+
+// Clear transient on forced update check
+function msstavby_force_update_check($transient) {
+	if (isset($_GET['force-check']) && $transient === false) {
+		msstavby_delete_theme_cache();
+	}
+	return $transient;
+}
+add_filter('site_transient_update_themes', 'msstavby_force_update_check', 10, 1);
+add_action('after_switch_theme', 'msstavby_delete_theme_cache');
+
+// ============================================================
+// ADMIN-ONLY COMMENTS
+// ============================================================
+
+/**
+ * Output HTML comments only for administrators
+ * @param string $comment The comment text (without <!-- --> wrapper)
+ */
+function admin_comment($comment_text) {
+	if (current_user_can('administrator')) {
+		echo '<!-- ' . esc_html($comment_text) . ' -->';
+	}
+}
+
+// ============================================================
 // INITIALIZATION
 // ============================================================
 
@@ -711,5 +1025,6 @@ remove_all_filters("content_pre ");
 add_action('after_switch_theme', 'initial_theme');
 add_action('after_setup_theme', 'remove_admin_bar');
 add_action('after_setup_theme', 'add_menus');
+add_action('after_setup_theme', 'msstavby_theme_support');
 remove_filter( 'the_content', 'wpautop' );
 ?>
